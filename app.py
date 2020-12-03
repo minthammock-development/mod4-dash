@@ -16,7 +16,7 @@ from sklearn.utils import compute_class_weight
 from PIL import Image as pilImage
 import io
 
-from base64 import decodestring
+from base64 import decodebytes
 
 import datetime
 
@@ -115,6 +115,7 @@ app.layout = html.Div(
             'margin': 'auto'
             }),
 
+      # This is the upload widget that productionized the model and auto predicts the class of the image uploaded.  
       dcc.Upload(
         id='upload-image',
         children=[
@@ -145,78 +146,88 @@ app.layout = html.Div(
   ],
   className='app')
 
-def parse_contents(contents, filename):
+def parse_contents(content, filename):
+  try:
+    imageBytes = decodebytes(content.split(',')[1].encode('utf-8'))
+    image = pilImage.open(io.BytesIO(imageBytes))
+    image = image.convert('RGB')
+    image = image.resize((256, 256), pilImage.NEAREST)
+    image = img_to_array(image).reshape((1,256,256,3))
+
+
   
+    # image = decodebytes(content.split(',')[1].encode('ascii'))
+    # print('fail 1')
+    # print(type(image))
+    # procImg = load_img(
+    #   image,
+    #   color_mode='grayscale',
+    #   target_size=(256,256))
 
-    return html.Div(
-    children = [
-      html.H4('File Name: '+filename),
-      html.Hr(),
-      html.Br(),
-      # HTML images accept base64 encoded strings in the same format
-      # that is supplied by the upload
-      html.Img(src=contents, id = filename),
-      html.Hr(),],
-    style={
-          'width': '60%',
-          'textAlign': 'center',
-          'margin': 'auto'
-      })
+    print('fail 2')
 
+    # arrayImg = img_to_array(image)
+
+    print('fail 3')
+
+    generator = ImageDataGenerator(
+      rescale = 1./255)
+
+    print('fail 4')
+
+    # we put the image into an Imagedatagenerator object so it plays nice with the model
+    # finalImage = generator.flow(
+    #   image,  
+    #   batch_size = 1)
+
+    print('fail 5')
+    pred = model.predict(image)
+    label = np.where(model.predict(image) > .5, 'Pneumonia','Normal')
+    print(pred)
+    print('fail 6')
+  except:
+    print('The file image uploaded is not supported')
+    preds = 'The file type you have uploaded is not supported for this model. Plese use: jpeg, png'
+
+  return html.Div(
+  children = [
+    html.H4('File Name: '+filename),
+    html.H5('The prediction for this image is: '+ str(label).replace('[', '').replace(']', '').replace("'", '')),
+    html.H6('The calculated probability of having Pneunonia was: '+ str(pred).replace('[', '').replace(']', '').replace("'", '')),
+    html.Hr(),
+    html.Br(),
+    # HTML images accept base64 encoded strings in the same format
+    # that is supplied by the upload
+    html.Img(src=content, id = filename),
+    html.Hr(),],
+  style={
+        'width': '60%',
+        'textAlign': 'center',
+        'margin': 'auto'
+    })
+
+# callback to save the users image into the session as JSON
 @app.callback(dd.Output('user-session', 'data'),
+              dd.Output('output-image-upload', 'children'),
               dd.Input('upload-image', 'contents'),
               dd.State('upload-image', 'filename'))
 def update_user_session(list_of_contents, list_of_names):
+  # create an empty list to contin our dictonaries
   children = []
+
+  # loop through the uploaded images and save the image to the users session in a dcc.Store
+  children = []
+  data = []
   if list_of_contents is not None:
     for content,name in zip(list_of_contents, list_of_names):
-      children.append({'contents' : content, 'name' : name})
-    return children
+
+      # save each of the uploaded images and their file names into a dictonary (JSON)
+      data.append({'content':content, 'name':name})
+      children.append(parse_contents(content, name))
+
+    return data, children
   else:
-    return children
-
-
-@app.callback(dd.Output('output-image-upload', 'children'),
-              dd.Input('user-session', 'data'),)
-def update_output(userData):
-  if userData is not None:
-    children = [
-      parse_contents(decodestring(x['contents'].split(',')[1].encode('ascii')), x['name']) for x in userData]
-    return children
-
-# image = image_str.split(',')[1]
-# data = decodestring(image.encode('ascii'))
-
-
-
-
-# The following is a callback to allow the user to interact with the model in order to make predictions. 
-
-# @app.callback(dd.Output('prediction-output', 'children'),
-#               dd.Input(f'{}', ''),)
-# def update_output(userData):
-#   try:
-#     print(contents)
-#     procImg = load_img(
-#       contents,
-#       color_mode='grayscale',
-#       target_size=(256,256))
-#     arrayImg = img_to_array(procImg)
-
-#     generator = ImageDataGenerator(
-#       rescale = 1./255)
-
-#     # we put the image into an Imagedatagenerator object so it plays nice with the model
-#     finalImage = generator.flow(
-#       arrayImg,  
-#       batch_size = 1)
-
-#     preds = np.where(model.predict(finalImage) > .5, 1,0)
-#   except:
-#     print('The file image uploaded is not supported')
-#     preds = 'The file type you have uploaded is not supported for this model. Plese use: jpeg, png'
-      
-
+    return data, children
 
 if __name__ == '__main__':
     app.run_server(debug=True)
