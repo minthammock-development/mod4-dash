@@ -1,1 +1,10 @@
-tensorflow==2.23.0
+tensorflow
+dash
+dash-core-components
+dash-renderer
+dash-html-components
+scikit-learn
+pillow
+pandas
+numpy
+gunicorn
