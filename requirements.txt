@@ -1,1 +1,6 @@
-tensorflow==2.23.0
+tensorflow
+dash
+scikit-learn
+pillow
+pandas
+numpy
