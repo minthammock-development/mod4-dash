@@ -26,9 +26,13 @@ import numpy as np
 
 import os
 
+from flask import Flask
+
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+server = Flask('mod4-dash')
+
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets, server=server)
 
 # assume you have a "long-form" data frame
 # see https://plotly.com/python/px-arguments/ for more options
