@@ -1,6 +1,10 @@
 tensorflow
 dash
+dash-core-components
+dash-renderer
+dash-html-components
 scikit-learn
 pillow
 pandas
 numpy
+gunicorn
