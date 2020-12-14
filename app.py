@@ -3,6 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies  as dd
 import plotly.express as px
+import plotly.graph_objects as go
 
 import tensorflow as tf
 import tensorflow.keras as keras
@@ -28,125 +29,312 @@ import os
 
 from flask import Flask
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', './assests/app.css']
 
 server = Flask('mod4-dash')
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets, server=server)
 
-# assume you have a "long-form" data frame
-# see https://plotly.com/python/px-arguments/ for more options
-df = pd.DataFrame({
-    "Fruit": ["Apples", "Oranges", "Bananas", "Apples", "Oranges", "Bananas"],
-    "Amount": [4, 1, 2, 2, 4, 5],
-    "City": ["SF", "SF", "SF", "Montreal", "Montreal", "Montreal"]
-})
+# create a df with the model training info
+df = pd.read_csv('model-train-info_sgd-01.csv')
+df.rename(columns = {'Unnamed: 0' : 'Generation'}, inplace = True)
+df = df.set_index('Generation')
 
+#load in the classification model from the source files
 modelPath = './final-model'  #os.Path('final-model')
 model = keras.models.load_model(modelPath)
 
+# create a graph object that shows the accuracy scores
+accuracyFig = go.Figure()
+accuracyFig.add_trace(go.Scatter(
+  x=df.index, 
+  y=df.accuracy,
+  mode='lines+markers',
+  name='Training Set Accuracy'))
+accuracyFig.add_trace(go.Scatter(x=df.index, y=df.val_accuracy,
+                    mode='lines+markers',
+                    name='Validation Set Accuracy'))
+accuracyFig.update_layout(
+  title = {'text':'Training Accuracy Scores', 'font' : {'size': 40}},
+  yaxis = {'title' : {'text' : 'Percent Correct', 'font' : {'size' : 30}}},
+  xaxis = {'title' : {'text' : 'Generation', 'font' : {'size' : 30}}},
+  legend = {
+    'title' : {
+      'text' : 'Legend',
+      'font' : {'size': 24}
+    }, 
+    'font' : {'size' : 22}
+  },  
+  height = 750,
+  hovermode ='x unified'
+)
 
+# create a graph object that shows the loss scores
+lossFig = go.Figure()
+lossFig.add_trace(go.Scatter(x=df.index, y=df.loss,
+                    mode='lines+markers',
+                    name='Training Set Loss'))
+lossFig.add_trace(go.Scatter(x=df.index, y=df.val_loss,
+                    mode='lines+markers',
+                    name='Validation Set Loss'))
+lossFig.update_layout(
+  title = {
+    'text':'Training Loss Scores', 
+    'font' : {'size': 40}},
+  yaxis = {
+    'title' : {
+      'text' : 'Score', 
+      'font' : {'size' : 30}
+    }
+  },
+  xaxis = {'title' : {'text' : 'Generation', 'font' : {'size' : 30}}},
+  legend = {
+    'title' : {
+      'text' : 'Legend',
+      'font' : {'size': 24}
+    }, 
+    'font' : {'size' : 22}},
+  height = 750,
+  hovermode ='x unified'
+)
 
-fig = px.bar(df, x="Fruit", y="Amount", color="City", barmode="group")
+# create a graph object that shows the AUC scores
+aucFig = go.Figure()
+aucFig.add_trace(go.Scatter(x=df.index, y=df.auc,
+                    mode='lines+markers',
+                    name='Training Set AUC'))
+aucFig.add_trace(go.Scatter(x=df.index, y=df.val_auc,
+                    mode='lines+markers',
+                    name='Validation Set AUC'))
+aucFig.update_layout(
+  title = {
+    'text':'Training Area Under The Curve', 
+    'font' : {'size': 40},
+  },
+  yaxis = {
+    'title' : {
+      'text' : 'Total Area', 
+      'font' : {'size' : 30}
+    }
+  },
+  xaxis = {
+    'title' : {
+      'text' : 'Generation', 
+      'font' : {'size' : 30}
+    }
+  },
+  legend = {
+    'title' : {
+      'text' : 'Legend',
+      'font' : {'size': 24}
+    }, 
+    'font' : {'size' : 22}},
+  height = 750,
+  hovermode ='x unified'
+)
 
 app.layout = html.Div(
   children=[
+    dcc.Tabs(
+      style = {
+        'width' : '60%',
+        'margin' : 'auto',
+        'font-size' : '24px',
+      },
+      className = 'tabs',
+      children = [
+        dcc.Tab(
+          className = 'model_info_tab',
+          label='Model Info',
+          children= [        
+            html.Div(
+              children=[
+                html.H1(
+                  children = ['''The Model: Convolutional Neural Network'''],
+                  style={
+                    'width': '60%',
+                    'lineHeight': 'auto',
+                    'textAlign': 'center',
+                    'margin': '2.5% auto',
+                    'fontSize' : '4em',
+                  },
+                ),
+                html.H3(
+                  children = [
+                    '''
+                    General Model Details
+                    '''],
+                  style={
+                    'width': '60%',
+                    'lineHeight': 'auto',
+                    'textAlign': 'center',
+                    'margin': '1% auto',
+                    'fontSize' : '3em',
+                  },
+                ),
+                html.P(
+                  children = [
+                    '''
+                    The model you will be intercating with on this app is a Tensorflow/Keras sequential model.
+                    Its architechture is a convulutional neural network at the base with a few dense layers at
+                    the head. This network has been tuned specifically for this problem and likely will not be a
+                    good candidate for transfer learning. 
 
-    html.Div(
-      children=[
-        dcc.Markdown(
+                    At its final iteration the model classified the set of test X-rays with 93% accuracy
+                    and 97% recall for the pneumonia class. The testing set was composed of 437 images of roughly the same class imbalance as 
+                    the training set.  The confusion matrix for the testing evaluation is below. Images that were of the pneumonia 
+                    class are label "1" and non-pneumonia images were label "0". The model's preformace is optimized
+                    for the medical industry, such that false negatives are to be avoided at the expense of false positives.
+                    Ideally both recall scores would be equally great but in this case a small amount of performace
+                    on the non-pneumonia case was sacrificed to further increase the ability to capture more patients
+                    with pneumonia. 
+                    '''],
+                  style={
+                    'width': '60%',
+                    'lineHeight': 'auto',
+                    'textAlign': 'left',
+                    'margin': 'auto auto 1% auto',
+                    'fontSize' : '2em',
+                  },
+                ),
+                html.Img(
+                  className = 'images',
+                  src = "https://drive.google.com/uc?id=1SdeYh7P5xeefibiG_ffW4v_TdBfZjzd8",
+                  style = {
+                    'width' : '30%',
+                    'margin' : '1% 34%',
+                    'textAlign' : 'center'
+
+                  }
+                ),
+                html.P(
+                  children = [
+                    '''
+                    The following graphs contain the information saved from the training process. 
+                    For this application we chose loss, accuracy, and area under the curve. Both loss
+                    and area under the curve are technical metrics that apply specifically to modeling
+                    and may not be familiar. Accuracy is the most intuitive for overall scoring and
+                    has the most direct implication for the medical industry. The others are included
+                    for reference or curiosity sake. 
+                    '''],
+                  style={
+                    'width': '60%',
+                    'lineHeight': 'auto',
+                    'textAlign': 'left',
+                    'margin': 'auto auto 1% auto',
+                    'fontSize' : '2em',
+                  },
+                ),
+              ]
+            ),
+            dcc.Graph(
+              id='accuracy_graph',
+              figure=accuracyFig,
+              style={
+                'width': '60%',
+                'lineHeight': 'auto',
+                'textAlign': 'left',
+                'margin': 'auto'
+              }
+            ),
+            dcc.Graph(
+              id='loss_graph',
+              figure=lossFig,
+              style={
+                'width': '60%',
+                'lineHeight': 'auto',
+                'textAlign': 'left',
+                'margin': 'auto',
+                'fontSize' : '2em',
+              },
+            ),
+            
+            dcc.Graph(
+              id='auc_graph',
+              figure=aucFig,
+              style={
+                'width': '60%',
+                'lineHeight': 'auto',
+                'textAlign': 'left',
+                'margin': 'auto'
+              }
+            ),
+          ]
+        ),
+        dcc.Tab(
+          className = 'predictions_tab',
+          label = 'Predictions',
           children = [
-            '''
-            # The Model: Convulutional Neural Network
+            html.Div(
+              children = [
+                html.H1(
+                  children = [
+                    '''
+                    Classify an Image
+                    '''],
+                  style={
+                    'width': '60%',
+                    'lineHeight': 'auto',
+                    'textAlign': 'center',
+                    'margin': '2.5% auto',
+                    'fontSize' : '4em',
+                  },
+                ),
+                html.P(
+                  children = [
+                    '''
+                    If you would like to use the model to classify an x-ray please upload a 
+                    black and white version (this should be the default for x-rays). The model 
+                    will automatically classify the image after upload. Please note that this is 
+                    a model is a tool to aid in classifying whether or not a patient's x-rays exhibit
+                    pneumonia. In the event it is being used in a professional setting please be 
+                    aware that the model is not perfect, and any predictions should be overseen and used
+                    in conjustion with traditional medical professional tools and personnel.
+                    '''],
+                  style={
+                    'width': '60%',
+                    'lineHeight': 'auto',
+                    'textAlign': 'center',
+                    'margin': 'auto auto 2.5% auto',
+                    'fontSize' : '2em',
+                  },
+                ),
 
-            ### General Model Details
-
-            The model you will be intercating with on this app is a Tensorflow/Keras sequential model.
-            It's architechture is a convulutional neural network at the base with a few dense layers at
-            the head. This network has been tuned specifically for this problem and likely will not be a
-            good candidate for transfer learning. 
-
-            At it's final iteration the model classified the set of test X-rays with [INSERT THING] accuracy
-            and a [INSERT THING] recall for the pneumonia class. 
-            '''],
-          style={
-            'width': '60%',
-            # 'height': '60px',
-            'lineHeight': 'auto',
-            # 'borderWidth': '1px',
-            # 'borderStyle': 'dashed',
-            # 'borderRadius': '5px',
-            'textAlign': 'left',
-            'margin': 'auto',
-            'textSize' : '16px'
-            },)]),
-    dcc.Graph(
-        id='example-graph',
-        figure=fig,
-        style={
-            'width': '60%',
-            # 'height': '60px',
-            'lineHeight': 'auto',
-            # 'borderWidth': '1px',
-            # 'borderStyle': 'dashed',
-            # 'borderRadius': '5px',
-            'textAlign': 'left',
-            'margin': 'auto'
-            }),
-    html.Div(children = [
-      dcc.Markdown(children=[
-        '''
-          ### Classify an Image
-
-          If you would like to use the model to classify an x-ray please upload a 
-          black and white version (this should be the default for x-rays). The model 
-          will automatically classify the image after upload. Please note that this is 
-          a model is a tool to aid in classifying whether or not a patient's x-rays exhibit
-          pneumonia. In the event it is being used in a professional setting please be 
-          aware that the model is not perfect and any predictions should be overseen and used
-          in conjustion with traditional medical professional tools and personnelle. 
-
-        '''
-      ],
-      style={
-            'width': '40%',
-            # 'height': '60px',
-            'lineHeight': 'auto',
-            # 'borderWidth': '1px',
-            # 'borderStyle': 'dashed',
-            # 'borderRadius': '5px',
-            'textAlign': 'left',
-            'margin': 'auto'
-            }),
-
-      # This is the upload widget that productionized the model and auto predicts the class of the image uploaded.  
-      dcc.Upload(
-        id='upload-image',
-        children=[
-          html.Div([
-            'Drag and Drop or ',
-            html.A('Select Files')
-          ]),
-          html.Br()
-        ],
-        style={
-            'width': '15%',
-            'height': '60px',
-            'lineHeight': '60px',
-            'borderWidth': '1px',
-            'borderStyle': 'dashed',
-            'borderRadius': '5px',
-            'textAlign': 'center',
-            'margin': 'auto'
-        },
-        # Allow multiple files to be uploaded
-        multiple=True
-      ),
-      html.Div(id = 'prediction-output'),
-      html.Div(id='output-image-upload'),
-      dcc.Store(
-        id = 'user-session',)])
-  
+                # This is the upload widget that productionized the model and auto predicts the class of the image uploaded.  
+                dcc.Upload(
+                  id='upload-image',
+                  children=[
+                    html.Div([
+                      'Drag and Drop or ',
+                      html.A('Select Files')
+                    ]),
+                    html.Br()
+                  ],
+                  style={
+                      'width': '20%',
+                      'height': '60px',
+                      'lineHeight': '60px',
+                      'borderWidth': '1px',
+                      'borderStyle': 'dashed',
+                      'borderRadius': '5px',
+                      'textAlign': 'center',
+                      'margin': 'auto',
+                      'font-size': '20px'
+                  },
+                  # Allow multiple files to be uploaded
+                  multiple=True
+                ),
+              ]
+            )
+          ]
+        )
+      ]
+    ),
+    html.Div(id = 'prediction-output'),
+    html.Div(id='output-image-upload'),
+    dcc.Store(
+      id = 'user-session',
+    )
   ],
   className='app')
 
@@ -155,39 +343,19 @@ def parse_contents(content, filename):
     imageBytes = decodebytes(content.split(',')[1].encode('utf-8'))
     image = pilImage.open(io.BytesIO(imageBytes))
     image = image.convert('RGB')
-    image = image.resize((256, 256), pilImage.NEAREST)
+    image = imageToDisplay = image.resize((256, 256), pilImage.NEAREST)
     image = img_to_array(image).reshape((1,256,256,3))
-
-
-  
-    # image = decodebytes(content.split(',')[1].encode('ascii'))
-    # print('fail 1')
-    # print(type(image))
-    # procImg = load_img(
-    #   image,
-    #   color_mode='grayscale',
-    #   target_size=(256,256))
 
     print('fail 2')
 
-    # arrayImg = img_to_array(image)
-
-    print('fail 3')
-
     generator = ImageDataGenerator(
       rescale = 1./255)
-
-    print('fail 4')
-
-    # we put the image into an Imagedatagenerator object so it plays nice with the model
-    # finalImage = generator.flow(
-    #   image,  
-    #   batch_size = 1)
 
     print('fail 5')
     pred = model.predict(image)
     label = np.where(model.predict(image) > .5, 'Pneumonia','Normal')
     print(pred)
+
     print('fail 6')
   except:
     print('The file image uploaded is not supported')
@@ -200,9 +368,10 @@ def parse_contents(content, filename):
     html.H6('The calculated probability of having Pneunonia was: '+ str(pred).replace('[', '').replace(']', '').replace("'", '')),
     html.Hr(),
     html.Br(),
+
     # HTML images accept base64 encoded strings in the same format
     # that is supplied by the upload
-    html.Img(src=content, id = filename),
+    html.Img(src=imageToDisplay, id = filename),
     html.Hr(),],
   style={
         'width': '60%',
