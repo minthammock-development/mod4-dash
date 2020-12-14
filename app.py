@@ -55,17 +55,17 @@ accuracyFig.add_trace(go.Scatter(x=df.index, y=df.val_accuracy,
                     mode='lines+markers',
                     name='Validation Set Accuracy'))
 accuracyFig.update_layout(
-  title = {'text':'Training Accuracy Scores', 'font' : {'size': 40}},
-  yaxis = {'title' : {'text' : 'Percent Correct', 'font' : {'size' : 30}}},
-  xaxis = {'title' : {'text' : 'Generation', 'font' : {'size' : 30}}},
+  title = {'text':'Training Accuracy Scores', 'font' : {'size': 24}},
+  yaxis = {'title' : {'text' : 'Percent Correct', 'font' : {'size' : 18}}},
+  xaxis = {'title' : {'text' : 'Generation', 'font' : {'size' : 18}}},
   legend = {
     'title' : {
       'text' : 'Legend',
-      'font' : {'size': 24}
+      'font' : {'size': 16}
     }, 
-    'font' : {'size' : 22}
+    'font' : {'size' : 14}
   },  
-  height = 750,
+  height = 500,
   hovermode ='x unified'
 )
 
@@ -80,21 +80,21 @@ lossFig.add_trace(go.Scatter(x=df.index, y=df.val_loss,
 lossFig.update_layout(
   title = {
     'text':'Training Loss Scores', 
-    'font' : {'size': 40}},
+    'font' : {'size': 24}},
   yaxis = {
     'title' : {
       'text' : 'Score', 
-      'font' : {'size' : 30}
+      'font' : {'size' : 18}
     }
   },
-  xaxis = {'title' : {'text' : 'Generation', 'font' : {'size' : 30}}},
+  xaxis = {'title' : {'text' : 'Generation', 'font' : {'size' : 18}}},
   legend = {
     'title' : {
       'text' : 'Legend',
-      'font' : {'size': 24}
+      'font' : {'size': 16}
     }, 
-    'font' : {'size' : 22}},
-  height = 750,
+    'font' : {'size' : 14}},
+  height = 500,
   hovermode ='x unified'
 )
 
@@ -109,27 +109,27 @@ aucFig.add_trace(go.Scatter(x=df.index, y=df.val_auc,
 aucFig.update_layout(
   title = {
     'text':'Training Area Under The Curve', 
-    'font' : {'size': 40},
+    'font' : {'size': 24},
   },
   yaxis = {
     'title' : {
       'text' : 'Total Area', 
-      'font' : {'size' : 30}
+      'font' : {'size' : 18}
     }
   },
   xaxis = {
     'title' : {
       'text' : 'Generation', 
-      'font' : {'size' : 30}
+      'font' : {'size' : 18}
     }
   },
   legend = {
     'title' : {
       'text' : 'Legend',
-      'font' : {'size': 24}
+      'font' : {'size': 16}
     }, 
-    'font' : {'size' : 22}},
-  height = 750,
+    'font' : {'size' : 14}},
+  height = 500,
   hovermode ='x unified'
 )
 
@@ -156,7 +156,7 @@ app.layout = html.Div(
                     'lineHeight': 'auto',
                     'textAlign': 'center',
                     'margin': '2.5% auto',
-                    'fontSize' : '4em',
+                    'fontSize' : '3em',
                   },
                 ),
                 html.H3(
@@ -169,7 +169,7 @@ app.layout = html.Div(
                     'lineHeight': 'auto',
                     'textAlign': 'center',
                     'margin': '1% auto',
-                    'fontSize' : '3em',
+                    'fontSize' : '2em',
                   },
                 ),
                 html.P(
@@ -194,7 +194,7 @@ app.layout = html.Div(
                     'lineHeight': 'auto',
                     'textAlign': 'left',
                     'margin': 'auto auto 1% auto',
-                    'fontSize' : '2em',
+                    'fontSize' : '1.2em',
                   },
                 ),
                 html.Img(
@@ -222,7 +222,7 @@ app.layout = html.Div(
                     'lineHeight': 'auto',
                     'textAlign': 'left',
                     'margin': 'auto auto 1% auto',
-                    'fontSize' : '2em',
+                    'fontSize' : '1.2em',
                   },
                 ),
               ]
@@ -277,7 +277,7 @@ app.layout = html.Div(
                     'lineHeight': 'auto',
                     'textAlign': 'center',
                     'margin': '2.5% auto',
-                    'fontSize' : '4em',
+                    'fontSize' : '3em',
                   },
                 ),
                 html.P(
@@ -296,7 +296,7 @@ app.layout = html.Div(
                     'lineHeight': 'auto',
                     'textAlign': 'center',
                     'margin': 'auto auto 2.5% auto',
-                    'fontSize' : '2em',
+                    'fontSize' : '1.2em',
                   },
                 ),
 
@@ -319,7 +319,7 @@ app.layout = html.Div(
                       'borderRadius': '5px',
                       'textAlign': 'center',
                       'margin': 'auto',
-                      'font-size': '20px'
+                      'font-size': '20px' 
                   },
                   # Allow multiple files to be uploaded
                   multiple=True
