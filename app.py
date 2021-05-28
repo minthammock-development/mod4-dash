@@ -199,7 +199,7 @@ app.layout = html.Div(
                 ),
                 html.Img(
                   className = 'images',
-                  src = "https://drive.google.com/uc?id=1SdeYh7P5xeefibiG_ffW4v_TdBfZjzd8",
+                  src = "https://raw.githubusercontent.com/minthammock-development/mod4Project/master/second-model-confustion-matrix.png",
                   style = {
                     'width' : '30%',
                     'margin' : '1% 34%',
