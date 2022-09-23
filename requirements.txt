@@ -47,7 +47,7 @@ Pillow==8.0.1
 plotly==4.13.0
 pop-config==6.11
 prompt-toolkit==3.0.8
-protobuf==3.14.0
+protobuf==3.18.3
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 Pygments==2.7.2
